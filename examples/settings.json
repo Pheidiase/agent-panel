@@ -1,0 +1,6 @@
+{
+  "workspace": "../projects",
+  "host": "127.0.0.1",
+  "port": 4317,
+  "homeUrl": "https://example.com/"
+}

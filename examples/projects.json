@@ -1,0 +1,10 @@
+[
+  {
+    "id": "general",
+    "name": "Genel / General",
+    "description": "Ev dizininde terminal aç / Open a terminal in your home directory.",
+    "icon": "terminal",
+    "color": "amber",
+    "kind": "general"
+  }
+]

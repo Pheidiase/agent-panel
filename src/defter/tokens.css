@@ -1,0 +1,327 @@
+/* Defter — Agent Panel tasarım sistemi (v4), temel katman.
+   Fikir: kâğıt üstünde mürekkep. Okuma yüzeyi sakin ve yüksek kontrastlı;
+   renk yalnız anlam taşır (ajan sekmesi, durum, onay mührü).
+   Bu dosya yalnız token, yazı tipi, reset ve ilkel öğeleri tanımlar.
+   Bileşen stilleri shell.css ve conversation.css içindedir. */
+
+@import "@fontsource-variable/geist/index.css";
+@import "@fontsource-variable/geist-mono/index.css";
+
+:root {
+  color-scheme: light;
+
+  /* Yüzeyler — sıcak kâğıt */
+  --paper: #f5f2eb;          /* ana zemin */
+  --paper-2: #ece7dc;        /* kenar çubuğu, ikincil zemin */
+  --rail: #ece7dc;           /* kenar çubuğu zemini (tonlu ray) */
+  --canvas: #fbfaf7;         /* ana çalışma alanı (açık tuval) */
+  --surface: #ffffff;        /* kart, composer, modal */
+  --surface-2: #e8e2d5;      /* kullanıcı mesajı, seçili satır */
+  --sunken: #efebe2;         /* kod bloğu, input içi */
+  --overlay: rgba(27, 26, 23, 0.38);
+
+  /* Mürekkep */
+  --ink: #1b1a17;
+  --ink-2: #4a463f;
+  --ink-3: #686256;
+  --ink-4: #686256;          /* yalnız dekoratif / placeholder */
+  --on-ink: #fcfbf8;         /* mürekkep zemin üstündeki metin */
+
+  /* Çizgiler */
+  --rule: #ddd6c8;
+  --rule-strong: #c7bead;
+
+  /* Anlam renkleri */
+  --stamp: #c8401a;          /* onay mührü / dikkat — tek imza rengi */
+  --stamp-soft: #f6e0d6;
+  --stamp-text: #b03510;     /* küçük metinde mühür rengi (≥4.5:1) */
+  --on-badge: #fff;          /* mühür/uyarı rozetindeki yazı */
+  --ok: #2e6b3c;
+  --ok-soft: #dfeadb;
+  --warn: #8a5800;
+  --warn-soft: #f3e6c8;
+  --danger: #b0261c;
+  --danger-ink: #ffffff;
+  --danger-soft: #f5dbd7;
+  --add-bg: #e3eedc;
+  --add-ink: #2a5b31;
+  --del-bg: #f6e0dc;
+  --del-ink: #8f2a1f;
+
+  /* Ajan sekmeleri */
+  --agent-hermes: #936400;
+  --agent-codex: #17707a;
+  --agent-claude: #b8582f;
+  --agent: var(--ink);       /* oturum açıkken .agent-<id> ile değişir */
+
+  /* Terminal nesnesi (her iki temada koyu) */
+  --term-bg: #1c1b19;
+  --term-frame: #2b2a27;
+
+  /* Yazı */
+  --font-ui: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --fs-xs: 11.5px;
+  --fs-sm: 12.5px;
+  --fs-ui: 14px;
+  --fs-read: 15.5px;         /* sohbet okuma metni */
+  --fs-h3: 16px;
+  --fs-h2: 20px;
+  --fs-h1: 28px;
+  --lh-read: 1.65;
+
+  /* Ölçü */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 18px;
+  --sidebar-w: 264px;
+  --header-h: 56px;
+  --read-w: 760px;
+  --shadow-1: 0 1px 0 rgba(27, 26, 23, 0.04), 0 1px 3px rgba(27, 26, 23, 0.06);
+  --shadow-2: 0 2px 6px rgba(27, 26, 23, 0.06), 0 12px 32px rgba(27, 26, 23, 0.10);
+  --shadow-3: 0 8px 24px rgba(27, 26, 23, 0.12), 0 32px 80px rgba(27, 26, 23, 0.18);
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* Koyu tema: gece mürekkebi. Sistem tercihi veya elle seçim. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #151513;
+    --paper-2: #1b1a18;
+    --rail: #121211;
+    --canvas: #1b1a18;
+    --surface: #211f1c;
+    --surface-2: #2b2925;
+    --sunken: #1a1917;
+    --overlay: rgba(0, 0, 0, 0.55);
+    --ink: #ece8df;
+    --ink-2: #bdb6a9;
+    --ink-3: #a49b8c;
+    --ink-4: #a49b8c;
+    --on-ink: #151513;
+    --rule: #2d2b27;
+    --rule-strong: #3e3b35;
+    --stamp: #ef6a40;
+    --stamp-soft: #3a2219;
+    --stamp-text: var(--stamp);
+    --on-badge: var(--paper);
+    --ok: #7fbf86;
+    --ok-soft: #1d2c1f;
+    --warn: #e0a640;
+    --warn-soft: #33281a;
+    --danger: #f0786b;
+    --danger-ink: #211210;
+    --danger-soft: #3a1d1a;
+    --add-bg: #1d2d1f;
+    --add-ink: #9fd3a3;
+    --del-bg: #351d1a;
+    --del-ink: #f0a196;
+    --agent-hermes: #e2a93a;
+    --agent-codex: #4cb8c2;
+    --agent-claude: #e58a62;
+    --term-bg: #0f0f0e;
+    --term-frame: #262421;
+    --shadow-1: 0 1px 0 rgba(0, 0, 0, 0.3);
+    --shadow-2: 0 2px 8px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.35);
+    --shadow-3: 0 8px 24px rgba(0, 0, 0, 0.45), 0 32px 80px rgba(0, 0, 0, 0.55);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #151513;
+  --paper-2: #1b1a18;
+  --rail: #121211;
+  --canvas: #1b1a18;
+  --surface: #211f1c;
+  --surface-2: #2b2925;
+  --sunken: #1a1917;
+  --overlay: rgba(0, 0, 0, 0.55);
+  --ink: #ece8df;
+  --ink-2: #bdb6a9;
+  --ink-3: #a49b8c;
+  --ink-4: #a49b8c;
+  --on-ink: #151513;
+  --rule: #2d2b27;
+  --rule-strong: #3e3b35;
+  --stamp: #ef6a40;
+  --stamp-soft: #3a2219;
+  --stamp-text: var(--stamp);
+  --on-badge: var(--paper);
+  --ok: #7fbf86;
+  --ok-soft: #1d2c1f;
+  --warn: #e0a640;
+  --warn-soft: #33281a;
+  --danger: #f0786b;
+  --danger-ink: #211210;
+  --danger-soft: #3a1d1a;
+  --add-bg: #1d2d1f;
+  --add-ink: #9fd3a3;
+  --del-bg: #351d1a;
+  --del-ink: #f0a196;
+  --agent-hermes: #e2a93a;
+  --agent-codex: #4cb8c2;
+  --agent-claude: #e58a62;
+  --term-bg: #0f0f0e;
+  --term-frame: #262421;
+  --shadow-1: 0 1px 0 rgba(0, 0, 0, 0.3);
+  --shadow-2: 0 2px 8px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.35);
+  --shadow-3: 0 8px 24px rgba(0, 0, 0, 0.45), 0 32px 80px rgba(0, 0, 0, 0.55);
+}
+
+/* Oturumun ajan rengi (main.tsx .app.agent-<id>) */
+.agent-hermes { --agent: var(--agent-hermes); }
+.agent-codex  { --agent: var(--agent-codex); }
+.agent-claude { --agent: var(--agent-claude); }
+
+/* ---------- Reset ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--fs-ui);
+  line-height: 1.5;
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+h1, h2, h3, h4, p { margin: 0; }
+h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.015em; color: var(--ink); }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: 0; padding: 0; }
+button:disabled { cursor: not-allowed; opacity: 0.45; }
+a { color: inherit; }
+code, kbd, pre, samp { font-family: var(--font-mono); font-size: 0.92em; }
+pre { margin: 0; }
+svg { flex-shrink: 0; }
+::selection { background: color-mix(in srgb, var(--agent) 22%, transparent); }
+time, .num, .count, .number { font-variant-numeric: tabular-nums; }
+
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--agent);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+* { scrollbar-width: thin; scrollbar-color: var(--rule-strong) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb {
+  background: var(--rule-strong);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 99px;
+}
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------- İlkel öğeler ---------- */
+
+/* Birincil: mürekkep dolgu. Tek ekranda en fazla bir tane. */
+.primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 38px; padding: 0 16px;
+  background: var(--ink); color: var(--on-ink);
+  border-radius: var(--r-md);
+  font-weight: 550; letter-spacing: -0.005em;
+  transition: transform 0.12s var(--ease), background 0.15s;
+}
+.primary:hover:not(:disabled) { background: color-mix(in srgb, var(--ink) 86%, var(--agent)); }
+.primary:active:not(:disabled) { transform: translateY(1px); }
+.primary.full { width: 100%; height: 44px; }
+
+/* İkincil: çizgili kâğıt düğme */
+.secondary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  height: 36px; padding: 0 14px;
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-md);
+  font-weight: 500;
+  transition: border-color 0.15s, background 0.15s;
+}
+.secondary:hover:not(:disabled) { border-color: var(--ink-3); }
+
+.danger {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  height: 36px; padding: 0 14px;
+  background: var(--danger); color: var(--danger-ink);
+  border-radius: var(--r-md); font-weight: 550;
+}
+
+.text-button {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--ink-2); font-size: var(--fs-sm); font-weight: 500;
+  padding: 4px 6px; margin: -4px -6px; border-radius: var(--r-sm);
+}
+.text-button:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 6%, transparent); }
+
+.icon-button {
+  display: inline-grid; place-items: center;
+  width: 34px; height: 34px; border-radius: var(--r-md);
+  color: var(--ink-2);
+  transition: background 0.15s, color 0.15s;
+}
+.icon-button:hover { background: color-mix(in srgb, var(--ink) 7%, transparent); color: var(--ink); }
+
+input[type="text"], input[type="password"], input:not([type]), select, textarea {
+  background: var(--surface);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-md);
+  color: var(--ink);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+input::placeholder, textarea::placeholder { color: var(--ink-4); }
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: none;
+  border-color: var(--ink-3);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--agent) 16%, transparent);
+}
+input[type="checkbox"] { accent-color: var(--ink); width: 15px; height: 15px; margin: 0; }
+
+kbd, .kbd-hint {
+  display: inline-flex; align-items: center;
+  height: 20px; padding: 0 6px;
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-3);
+  background: var(--paper); border: 1px solid var(--rule); border-bottom-width: 2px;
+  border-radius: 5px;
+}
+
+/* Etiket dili: küçük harf, mono değil; büyük harf yok. */
+.eyebrow {
+  font-size: var(--fs-xs); font-weight: 500; color: var(--ink-3);
+  text-transform: none; letter-spacing: 0;
+}
+
+.error {
+  padding: 10px 12px; border-radius: var(--r-md);
+  background: var(--danger-soft); color: var(--danger);
+  font-size: var(--fs-sm);
+}
+
+/* Ajan lambası → defter sekmesi: küçük renkli kare, çalışırken nabız. */
+.lamp, .live-dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 2px;
+  background: var(--ink-4); flex-shrink: 0;
+}
+.lamp.hermes { --c: var(--agent-hermes); }
+.lamp.codex  { --c: var(--agent-codex); }
+.lamp.claude { --c: var(--agent-claude); }
+.lamp { background: color-mix(in srgb, var(--c, var(--ink-4)) 35%, var(--paper)); }
+.lamp.on, .live-dot { background: var(--c, var(--ok)); }
+.lamp.on { box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 18%, transparent); }
+.live-dot { --c: var(--agent); }
+.live-dot.offline { background: var(--ink-4); }
+
+@keyframes defter-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}

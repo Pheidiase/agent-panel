@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # One entry per major in package.json "engines".
+        node: [22, 24, 26]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system tools used by the tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends tmux python3 util-linux build-essential
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          # The runner image can cache an older patch than "engines" allows.
+          check-latest: true
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # npm 11 may skip install scripts that are not approved; node-pty needs its native build.
+      - name: Ensure node-pty is built
+        run: |
+          check='const p = require("node-pty").spawn("/bin/echo", ["pty-ok"], {}); let out = ""; p.onData(d => { out += d; }); p.onExit(() => process.exit(out.includes("pty-ok") ? 0 : 1));'
+          if ! node -e "$check"; then
+            npm install-scripts approve node-pty || true
+            npm rebuild node-pty
+            node -e "$check"
+          fi
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
